@@ -66,7 +66,6 @@ crawlers = get_good_sources()
 errors = {}
 not_found = []
 
-
 def get_chapters_len(crawler_instance):
     crawler_instance.read_novel_info()
     if len(crawler_instance.chapters) == 0:
@@ -80,11 +79,12 @@ def get_info(crawler, query):
     results = []
     url = newCrawl.base_url
     novel_info = newCrawl.search_novel(query=query)
-    for novel in novel_info:
-        if novel['title'] == query:
-            newCrawl.novel_url = novel['url']
-            logger.info(f"Found novel at : {novel['url']}")
-            results =  get_chapters_len(newCrawl)
+    if novel_info:
+        for novel in novel_info:
+            if novel['title'] == query:
+                newCrawl.novel_url = novel['url']
+                logger.info(f"Found novel at : {novel['url']}")
+                results =  get_chapters_len(newCrawl)
 
     newCrawl.destroy()
     if results:
@@ -96,6 +96,7 @@ def get_info(crawler, query):
 def single_search(query, crawler_instances):
     final_list = []
     num_of_crawlers = len(crawler_instances)
+    
     with ThreadPoolExecutor(max_workers=num_of_crawlers) as executor:
         future_to_url = {executor.submit(get_info, crawler_instance, query):
                  crawler_instance for crawler_instance in crawler_instances}
@@ -108,7 +109,7 @@ def single_search(query, crawler_instances):
             except (TypeError, requests.exceptions.SSLError,ssl.SSLEOFError, 
                 urllib3.exceptions.MaxRetryError, requests.exceptions.ConnectionError,
                 urllib3.exceptions.NewConnectionError, requests.exceptions.MissingSchema,
-                AttributeError,requests.exceptions.ReadTimeout ):
+                AttributeError,requests.exceptions.ReadTimeout, ):
                 print("wrong")
                 pass
             
@@ -128,14 +129,16 @@ novel_names = [x for x in novel_names if x not in novels_list.keys()]
 for num, novel in enumerate(novel_names):
     list_of_results = []
     final = []
-    items_to_search = 50
     random.shuffle(crawlers)
-
+    items_to_search = 5
     for x in range(0, len(crawlers), items_to_search):
         crawler_list_slice = crawlers[x : x + items_to_search]
-        semi_final = single_search(novel, crawler_list_slice)
-        if semi_final:
-            final = final + semi_final
+        try:
+            semi_final = single_search(novel, crawler_list_slice)
+            if semi_final:
+                final = final + semi_final
+        except Exception as exc:
+            print(traceback.format_exc())
         logger.info(f"{len(final)} -- {novel}")
         if len(final) >= 5:
             break
@@ -148,8 +151,11 @@ for num, novel in enumerate(novel_names):
         novels_list[novel] = final
         not_found.append(novel)
 
-    with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(novels_list, f, ensure_ascii=False, indent=2)
-    with open('not_found.json', 'w', encoding='utf-8') as not_f:
-        json.dump(not_found, not_f, ensure_ascii=False, indent=2)
+    try:
+        with open('data.json', 'w', encoding='utf-8') as f:
+            json.dump(novels_list, f, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        print(traceback.format_exc())
+    # with open('not_found.json', 'w', encoding='utf-8') as not_f:
+    #     json.dump(not_found, not_f, ensure_ascii=False, indent=2)
 
