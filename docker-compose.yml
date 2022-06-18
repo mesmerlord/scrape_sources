@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  scraper:
+    build:
+      context: .
+    volumes:
+      - .:/app:z
+
+    command: ./start
