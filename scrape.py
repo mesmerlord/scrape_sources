@@ -125,7 +125,7 @@ with open('data.json', 'r', encoding='utf-8') as json_file:
 with open('not_found.json', 'r', encoding='utf-8') as json_file_2:  
     not_found = json.load(json_file_2)
 
-novel_names = [x for x in novel_names if x not in novels_list.keys()]
+novel_names = [x for x in novel_names if x not in novels_list.keys() and len(x) < 30]
 for num, novel in enumerate(novel_names):
     list_of_results = []
     final = []
