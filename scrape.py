@@ -48,11 +48,13 @@ def get_good_sources():
     
     for source in df:
         source_domain = tldextract.extract(source)
-        good_sources.append(source_domain.domain)
+        source_full_domain = [source_domain.domain, source_domain.suffix]
+        good_sources.append(source_full_domain)
 
     for x in allCrawlers:
         crawler_domain = tldextract.extract(str(x))
-        if crawler_domain.domain in good_sources:
+        crawler_full_domain = [crawler_domain.domain, crawler_domain.suffix]
+        if crawler_full_domain in good_sources:
             sources_to_use.append(x)
             try:
                 crawl = allCrawlers[x]
